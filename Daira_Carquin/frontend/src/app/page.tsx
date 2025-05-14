@@ -5,6 +5,7 @@ import { FaPhone } from 'react-icons/fa';
 import CallTable from './components/CallTable';
 import EventHistory from './components/EventHistory';
 import socket from './utils/socket';
+import { Box, Tabs, Tab } from '@mui/material';
 
 interface Call {
     id: string;
@@ -17,6 +18,11 @@ const Home: React.FC = () => {
     const [filterStatus, setFilterStatus] = useState('');
     const [filterQueue, setFilterQueue] = useState('');
     const [calls, setCalls] = useState<Call[]>([]);
+    const [value, setValue] = useState(0);
+
+    const handleChange = (event: React.SyntheticEvent, newValue: number) => {
+        setValue(newValue);
+    };
 
     useEffect(() => {
         const fetchInitialCalls = async () => {
@@ -73,89 +79,96 @@ const Home: React.FC = () => {
                 </h1>
             </header>
 
-            <div
-                style={{
-                    marginBottom: '24px',
-                    display: 'flex',
-                    gap: '64px',
-                    alignItems: 'center',
-                }}
-            >
-                <div
-                    style={{
-                        display: 'flex',
-                        gap: '8px',
-                        alignItems: 'flex-start',
-                    }}
-                >
-                    <input
-                        type="text"
-                        placeholder="Filter by Status"
-                        value={filterStatus}
-                        onChange={(e) => setFilterStatus(e.target.value)}
-                        style={{
-                            padding: '8px 16px',
-                            width: '100%',
-                            maxWidth: '256px',
-                            border: '1px solid #d1d5db',
-                            borderRadius: '8px',
-                            boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-                            outline: 'none',
-                        }}
-                        onFocus={(e) => (e.currentTarget.style.boxShadow = '0 0 0 2px #3b82f6')}
-                        onBlur={(e) => (e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,0.05)')}
-                    />
-                    <input
-                        type="text"
-                        placeholder="Filter by Queue"
-                        value={filterQueue}
-                        onChange={(e) => setFilterQueue(e.target.value)}
-                        style={{
-                            padding: '8px 16px',
-                            width: '100%',
-                            maxWidth: '256px',
-                            border: '1px solid #d1d5db',
-                            borderRadius: '8px',
-                            boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-                            outline: 'none',
-                        }}
-                        onFocus={(e) => (e.currentTarget.style.boxShadow = '0 0 0 2px #3b82f6')}
-                        onBlur={(e) => (e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,0.05)')}
-                    />
-                </div>
+            <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+                <Tabs value={value} onChange={handleChange} aria-label="tabs example">
+                    <Tab label="Calls" />
+                    <Tab label="Event History" />
+                </Tabs>
+            </Box>
 
-                <div
-                    style={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                    }}
-                >
-                    <button
-                        onClick={fetchFilteredCalls}
+            {value === 0 && (
+                <div style={{ marginBottom: '40px' }}>
+                    <div
                         style={{
-                            padding: '8px 16px',
-                            backgroundColor: '#3b82f6',
-                            color: 'white',
-                            borderRadius: '8px',
-                            border: 'none',
-                            cursor: 'pointer',
-                            transition: 'background-color 0.3s ease',
+                            margin: '24px 0 0 24px',
+                            display: 'flex',
+                            gap: '64px',
+                            alignItems: 'center',
                         }}
-                        onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#2563eb')}
-                        onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#3b82f6')}
                     >
-                        Search
-                    </button>
+                        <div
+                            style={{
+                                display: 'flex',
+                                gap: '8px',
+                                alignItems: 'flex-start',
+                            }}
+                        >
+                            <input
+                                type="text"
+                                placeholder="Filter by Status"
+                                value={filterStatus}
+                                onChange={(e) => setFilterStatus(e.target.value)}
+                                style={{
+                                    padding: '8px 16px',
+                                    width: '100%',
+                                    maxWidth: '256px',
+                                    border: '1px solid #d1d5db',
+                                    borderRadius: '8px',
+                                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                                    outline: 'none',
+                                }}
+                                onFocus={(e) => (e.currentTarget.style.boxShadow = '0 0 0 2px #3b82f6')}
+                                onBlur={(e) => (e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,0.05)')}
+                            />
+                            <input
+                                type="text"
+                                placeholder="Filter by Queue"
+                                value={filterQueue}
+                                onChange={(e) => setFilterQueue(e.target.value)}
+                                style={{
+                                    padding: '8px 16px',
+                                    width: '100%',
+                                    maxWidth: '256px',
+                                    border: '1px solid #d1d5db',
+                                    borderRadius: '8px',
+                                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                                    outline: 'none',
+                                }}
+                                onFocus={(e) => (e.currentTarget.style.boxShadow = '0 0 0 2px #3b82f6')}
+                                onBlur={(e) => (e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,0.05)')}
+                            />
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'center' }}>
+                            <button
+                                onClick={fetchFilteredCalls}
+                                style={{
+                                    padding: '8px 16px',
+                                    backgroundColor: '#3b82f6',
+                                    color: 'white',
+                                    borderRadius: '8px',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    transition: 'background-color 0.3s ease',
+                                }}
+                                onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#2563eb')}
+                                onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#3b82f6')}
+                            >
+                                Search
+                            </button>
+                        </div>
+                    </div>
+
+                    <CallTable calls={calls} />
                 </div>
-            </div>
+            )}
 
-            <section style={{ marginBottom: '40px' }}>
-                <CallTable calls={calls} />
-            </section>
 
-            <section>
-                <EventHistory />
-            </section>
+            {value === 1 && (
+                <div>
+                    <EventHistory />
+                </div>
+            )}
         </main>
     );
 };

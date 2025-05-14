@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 interface Call {
     id: string;
@@ -8,12 +8,26 @@ interface Call {
 }
 
 const CallTable: React.FC<{ calls: Call[] }> = ({ calls }) => {
+    const [currentPage, setCurrentPage] = useState(1);
+    const [rowsPerPage, setRowsPerPage] = useState(5);
+
+    const totalPages = Math.ceil(calls.length / rowsPerPage);
+
+    const indexOfLastRow = currentPage * rowsPerPage;
+    const indexOfFirstRow = indexOfLastRow - rowsPerPage;
+    const currentRows = calls.slice(indexOfFirstRow, indexOfLastRow);
+
+    const handlePageChange = (pageNumber: number) => {
+        setCurrentPage(pageNumber);
+    };
+
+    const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+        setRowsPerPage(Number(event.target.value));
+        setCurrentPage(1);
+    };
+
     return (
-        <div
-            style={{
-                padding: '24px',
-            }}
-        >
+        <div style={{ padding: '24px' }}>
             <h2
                 style={{
                     fontSize: '20px',
@@ -52,8 +66,8 @@ const CallTable: React.FC<{ calls: Call[] }> = ({ calls }) => {
                         </tr>
                     </thead>
                     <tbody>
-                        {Array.isArray(calls) && calls.length > 0 ? (
-                            calls.map((call) => (
+                        {Array.isArray(currentRows) && currentRows.length > 0 ? (
+                            currentRows.map((call) => (
                                 <tr
                                     key={call.id}
                                     style={{
@@ -129,6 +143,80 @@ const CallTable: React.FC<{ calls: Call[] }> = ({ calls }) => {
                         )}
                     </tbody>
                 </table>
+            </div>
+
+            {/* Contador de registros */}
+            <div
+                style={{
+                    marginTop: '16px',
+                    fontSize: '14px',
+                    color: '#374151',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                }}
+            >
+                <span>
+                    Showing {indexOfFirstRow + 1} to {Math.min(indexOfLastRow, calls.length)} of {calls.length} calls
+                </span>
+
+                <select
+                    value={rowsPerPage}
+                    onChange={handleRowsPerPageChange}
+                    style={{
+                        padding: '8px',
+                        fontSize: '14px',
+                        borderRadius: '4px',
+                        border: '1px solid #e5e7eb',
+                    }}
+                >
+                    <option value={5}>5</option>
+                    <option value={10}>10</option>
+                    <option value={15}>15</option>
+                    <option value={20}>20</option>
+                </select>
+            </div>
+
+            {/* Paginación */}
+            <div
+                style={{
+                    marginTop: '16px',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                }}
+            >
+                <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    style={{
+                        padding: '8px 16px',
+                        margin: '0 8px',
+                        backgroundColor: '#4CAF50',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                    }}
+                >
+                    Previous
+                </button>
+                <span>{`${currentPage} / ${totalPages}`}</span>
+                <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    style={{
+                        padding: '8px 16px',
+                        margin: '0 8px',
+                        backgroundColor: '#4CAF50',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                    }}
+                >
+                    Next
+                </button>
             </div>
         </div>
     );
