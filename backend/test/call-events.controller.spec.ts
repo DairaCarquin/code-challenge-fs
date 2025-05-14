@@ -12,16 +12,23 @@ describe('CallEventsController', () => {
     processEvent: jest.fn(),
   };
 
+  const mockConfigService = {
+    get: jest.fn().mockReturnValue('mock-config-value'),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      imports: [ConfigModule],
+      imports: [ConfigModule.forRoot()],
       controllers: [CallEventsController],
       providers: [
         {
           provide: CallEventService,
           useValue: mockService,
         },
-        ConfigService,
+        {
+          provide: ConfigService,
+          useValue: mockConfigService,
+        },
       ],
     }).compile();
 

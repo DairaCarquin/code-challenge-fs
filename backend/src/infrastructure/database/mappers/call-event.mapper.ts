@@ -15,7 +15,7 @@ export class CallEventMapper {
   static toOrm(event: Partial<CallEvent>): Partial<CallEventOrmEntity> {
     return {
       id: event.id,
-      callId: { id: event.callId } as any,
+      callId: event.callId,
       type: event.type,
       timestamp: event.timestamp,
       metadata: event.metadata,

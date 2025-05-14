@@ -1,103 +1,163 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+import { useEffect, useState } from 'react';
+import { FaPhone } from 'react-icons/fa';
+import CallTable from './components/CallTable';
+import EventHistory from './components/EventHistory';
+import socket from './utils/socket';
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+interface Call {
+    id: string;
+    status: string;
+    queueId: string;
+    startTime: string;
 }
+
+const Home: React.FC = () => {
+    const [filterStatus, setFilterStatus] = useState('');
+    const [filterQueue, setFilterQueue] = useState('');
+    const [calls, setCalls] = useState<Call[]>([]);
+
+    useEffect(() => {
+        const fetchInitialCalls = async () => {
+            const res = await fetch('/api/calls');
+            const data = await res.json();
+            setCalls(data);
+        };
+
+        fetchInitialCalls();
+
+        socket.on('call_updated', (updatedCall: Call) => {
+            setCalls((prev) =>
+                prev.map((call) => (call.id === updatedCall.id ? updatedCall : call))
+            );
+        });
+
+        return () => {
+            socket.off('call_updated');
+        };
+    }, []);
+
+    const fetchFilteredCalls = async () => {
+        const params = new URLSearchParams();
+        if (filterStatus) params.append('status', filterStatus);
+        if (filterQueue) params.append('queue_id', filterQueue);
+
+        const res = await fetch(`/api/calls?${params.toString()}`);
+        const data = await res.json();
+        setCalls(data);
+    };
+
+    return (
+        <main
+            style={{
+                minHeight: '100vh',
+                padding: '24px',
+            }}
+        >
+            <header style={{ marginBottom: '32px', textAlign: 'left' }}>
+                <h1
+                    style={{
+                        fontSize: '2.25rem',
+                        fontWeight: 800,
+                        color: '#1f2937',
+                        display: 'flex',
+                        justifyContent: 'flex-start',
+                        alignItems: 'center',
+                        gap: '8px',
+                        flexWrap: 'wrap',
+                    }}
+                >
+                    <FaPhone />
+                    Call Center Dashboard
+                </h1>
+            </header>
+
+            <div
+                style={{
+                    marginBottom: '24px',
+                    display: 'flex',
+                    gap: '64px',
+                    alignItems: 'center',
+                }}
+            >
+                <div
+                    style={{
+                        display: 'flex',
+                        gap: '8px',
+                        alignItems: 'flex-start',
+                    }}
+                >
+                    <input
+                        type="text"
+                        placeholder="Filter by Status"
+                        value={filterStatus}
+                        onChange={(e) => setFilterStatus(e.target.value)}
+                        style={{
+                            padding: '8px 16px',
+                            width: '100%',
+                            maxWidth: '256px',
+                            border: '1px solid #d1d5db',
+                            borderRadius: '8px',
+                            boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                            outline: 'none',
+                        }}
+                        onFocus={(e) => (e.currentTarget.style.boxShadow = '0 0 0 2px #3b82f6')}
+                        onBlur={(e) => (e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,0.05)')}
+                    />
+                    <input
+                        type="text"
+                        placeholder="Filter by Queue"
+                        value={filterQueue}
+                        onChange={(e) => setFilterQueue(e.target.value)}
+                        style={{
+                            padding: '8px 16px',
+                            width: '100%',
+                            maxWidth: '256px',
+                            border: '1px solid #d1d5db',
+                            borderRadius: '8px',
+                            boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                            outline: 'none',
+                        }}
+                        onFocus={(e) => (e.currentTarget.style.boxShadow = '0 0 0 2px #3b82f6')}
+                        onBlur={(e) => (e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,0.05)')}
+                    />
+                </div>
+
+                <div
+                    style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                    }}
+                >
+                    <button
+                        onClick={fetchFilteredCalls}
+                        style={{
+                            padding: '8px 16px',
+                            backgroundColor: '#3b82f6',
+                            color: 'white',
+                            borderRadius: '8px',
+                            border: 'none',
+                            cursor: 'pointer',
+                            transition: 'background-color 0.3s ease',
+                        }}
+                        onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#2563eb')}
+                        onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#3b82f6')}
+                    >
+                        Search
+                    </button>
+                </div>
+            </div>
+
+            <section style={{ marginBottom: '40px' }}>
+                <CallTable calls={calls} />
+            </section>
+
+            <section>
+                <EventHistory />
+            </section>
+        </main>
+    );
+};
+
+export default Home;

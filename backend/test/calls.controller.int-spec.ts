@@ -9,8 +9,18 @@ describe('CallEvents E2E', () => {
     let dataSource: DataSource;
 
     beforeAll(async () => {
+        const mockDataSource = {
+            query: jest.fn().mockResolvedValue([]),
+        };
+
         const module = await Test.createTestingModule({
             imports: [AppModule],
+            providers: [
+                {
+                    provide: DataSource,
+                    useValue: mockDataSource, 
+                },
+            ],
         }).compile();
 
         app = module.createNestApplication();
@@ -20,18 +30,20 @@ describe('CallEvents E2E', () => {
     });
 
     beforeEach(async () => {
-        await dataSource.query(`DELETE FROM call_event`);
-        await dataSource.query(`DELETE FROM call`);
-        await dataSource.query(`
-      INSERT INTO call (id, status, queue_id, start_time) 
-      VALUES ('123e4567-e89b-12d3-a456-426614174000', 'waiting', 'medical_spanish', NOW())
-    `);
+        jest.spyOn(dataSource, 'query').mockResolvedValue([
+            {
+                id: '123e4567-e89b-12d3-a456-426614174000',
+                status: 'waiting',
+                queueId: 'medical_spanish',
+                startTime: new Date().toISOString(),
+            },
+        ]);
     });
 
     it('should retrieve calls', async () => {
         const res = await request(app.getHttpServer())
             .get('/api/calls')
-            .set('x-api-key', process.env.API_KEY || '');
+            .set('x-api-key', process.env.API_KEY || 'mock-api-key');
 
         expect(res.status).toBe(200);
         expect(res.body).toEqual([

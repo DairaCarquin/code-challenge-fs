@@ -18,4 +18,13 @@ export class CallEventRepository implements CallEventRepositoryPort {
     const saved = await this.repo.save(ormEntity);
     return CallEventMapper.toDomain(saved);
   }
+
+  async findAll(status?: string, call_id?: string): Promise<CallEvent[]> {
+    const where: any = {};
+    if (status) where.type = status;
+    if (call_id) where.callId = call_id;
+
+    const results = await this.repo.find({ where });
+    return results.map(CallEventMapper.toDomain);
+  }
 }

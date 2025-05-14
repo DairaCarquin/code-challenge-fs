@@ -1,4 +1,5 @@
 import { Inject, Injectable, Logger } from "@nestjs/common";
+import { CallEvent } from "src/domain/entities/call-event.entity";
 import { CallStatus } from "src/domain/entities/call.entity";
 import { CallEventRepositoryPort } from "src/domain/ports/outbound/call-event-repository.interface";
 import { CallRepositoryPort } from "src/domain/ports/outbound/call-repository.interface";
@@ -134,4 +135,26 @@ export class CallEventService {
         const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
         return uuidRegex.test(value);
     }
+
+    async getGroupedEventHistory(status?: string, callId?: string) {
+        const eventHistory = await this.eventRepo.findAll(status, callId);
+
+        if (!eventHistory || eventHistory.length === 0) {
+            return [];
+        }
+
+        const grouped = eventHistory.reduce((acc, event) => {
+            if (!acc[event.callId]) {
+                acc[event.callId] = [];
+            }
+            acc[event.callId].push(event);
+            return acc;
+        }, {} as Record<string, CallEvent[]>);
+
+        return Object.entries(grouped).map(([callId, events]) => ({
+            callId,
+            events,
+        }));
+    }
+
 }
