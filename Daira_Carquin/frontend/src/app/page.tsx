@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { FaPhone } from 'react-icons/fa';
 import CallTable from './components/CallTable';
 import EventHistory from './components/EventHistory';
 import socket from './utils/socket';
-import { Box, Tabs, Tab } from '@mui/material';
+import { Box, Tabs, Tab, debounce } from '@mui/material';
 
 interface Call {
     id: string;
@@ -15,6 +15,7 @@ interface Call {
 }
 
 const Home: React.FC = () => {
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
     const [filterStatus, setFilterStatus] = useState('');
     const [filterQueue, setFilterQueue] = useState('');
     const [calls, setCalls] = useState<Call[]>([]);
@@ -24,53 +25,43 @@ const Home: React.FC = () => {
         setValue(newValue);
     };
 
+    const fetchFilteredCalls = async (status = filterStatus, queue = filterQueue) => {
+        const params = new URLSearchParams();
+        if (status) params.append('status', status);
+        if (queue) params.append('queue_id', queue);
+
+        const res = await fetch(`${API_BASE_URL}/api/calls?${params.toString()}`, {
+            headers: {
+                'x-api-key': 'supersecretkey',
+            },
+        });
+        const data = await res.json();
+        setCalls(data);
+    };
+
+    const debouncedFetch = useRef(
+        debounce(() => {
+            fetchFilteredCalls();
+        }, 1500)
+    );
+
     useEffect(() => {
         console.log('Conectando al socket...');
 
-        const fetchInitialCalls = async () => {
-            const res = await fetch('/api/calls');
-            const data = await res.json();
-            setCalls(data);
-        };
+        fetchFilteredCalls();
 
-        fetchInitialCalls();
-        socket.on('new-event', ({ type, data }) => {
-            console.log('📡 new-event received:', type, data);
-            if (type === 'call-created') {
-                setCalls(prev => [data, ...prev]);
-            }
-        });
-
-        socket.on('call-updated', (updatedCall: Call) => {
-            console.log('call-updated received:', updatedCall);
-            fetchFilteredCalls(); 
-            setCalls(prev => {
-                const index = prev.findIndex(call => call.id === updatedCall.id);
-                if (index !== -1) {
-                    const updated = [...prev];
-                    updated[index] = updatedCall;
-                    return updated;
-                } else {
-                    return [updatedCall, ...prev];
-                }
-            });
-        });
+        socket.on('new-event', () => debouncedFetch.current());
+        socket.on('call-updated', () => debouncedFetch.current());
 
         return () => {
-            socket.off('call-created');
+            socket.off('new-event');
             socket.off('call-updated');
         };
     }, []);
 
-    const fetchFilteredCalls = async () => {
-        const params = new URLSearchParams();
-        if (filterStatus) params.append('status', filterStatus);
-        if (filterQueue) params.append('queue_id', filterQueue);
-
-        const res = await fetch(`/api/calls?${params.toString()}`);
-        const data = await res.json();
-        setCalls(data);
-    };
+    useEffect(() => {
+        debouncedFetch.current();
+    }, [filterStatus, filterQueue]);
 
     return (
         <main
@@ -121,9 +112,7 @@ const Home: React.FC = () => {
                                 alignItems: 'flex-start',
                             }}
                         >
-                            <input
-                                type="text"
-                                placeholder="Filter by Status"
+                            <select
                                 value={filterStatus}
                                 onChange={(e) => setFilterStatus(e.target.value)}
                                 style={{
@@ -134,10 +123,20 @@ const Home: React.FC = () => {
                                     borderRadius: '8px',
                                     boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
                                     outline: 'none',
+                                    backgroundColor: 'white',
+                                    color: '#374151',
+                                    fontSize: '14px',
                                 }}
                                 onFocus={(e) => (e.currentTarget.style.boxShadow = '0 0 0 2px #3b82f6')}
                                 onBlur={(e) => (e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,0.05)')}
-                            />
+                            >
+                                <option value="">All Statuses</option>
+                                <option value="waiting">Waiting</option>
+                                <option value="active">Active</option>
+                                <option value="answered">Answered</option>
+                                <option value="on_hold">On Hold</option>
+                                <option value="ended">Ended</option>
+                            </select>
                             <input
                                 type="text"
                                 placeholder="Filter by Queue"
@@ -159,7 +158,7 @@ const Home: React.FC = () => {
 
                         <div style={{ display: 'flex', justifyContent: 'center' }}>
                             <button
-                                onClick={fetchFilteredCalls}
+                                onClick={() => fetchFilteredCalls()}
                                 style={{
                                     padding: '8px 16px',
                                     backgroundColor: '#3b82f6',
@@ -180,7 +179,6 @@ const Home: React.FC = () => {
                     <CallTable calls={calls} />
                 </div>
             )}
-
 
             {value === 1 && (
                 <div>

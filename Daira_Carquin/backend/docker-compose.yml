@@ -1,15 +1,15 @@
 services:
   backend:
-    build:
-      context: ./backend
+    build: .
     ports:
       - "3000:3000"
     env_file:
-      - ./backend/.env
+      - .env
     depends_on:
       - db
     networks:
       - app-network
+
   db:
     image: postgres:17
     restart: always
@@ -18,7 +18,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: callcenter
     ports:
-      - "5433:5432"
+      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     networks:

@@ -11,7 +11,7 @@ interface CallTableProps {
     calls: Call[];
 }
 
-const CallTable: React.FC<CallTableProps> = ({ calls }) => {
+const CallTable: React.FC<CallTableProps> = ({ calls= [] }) => {
 
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(5);
@@ -19,7 +19,7 @@ const CallTable: React.FC<CallTableProps> = ({ calls }) => {
     const totalPages = Math.ceil(calls.length / rowsPerPage);
     const indexOfLastRow = currentPage * rowsPerPage;
     const indexOfFirstRow = indexOfLastRow - rowsPerPage;
-    const currentRows = calls.slice(indexOfFirstRow, indexOfLastRow);
+    const currentRows = Array.isArray(calls) ? calls.slice(indexOfFirstRow, indexOfLastRow) : [];
 
     const handlePageChange = (pageNumber: number) => {
         if (pageNumber < 1 || pageNumber > totalPages) return;

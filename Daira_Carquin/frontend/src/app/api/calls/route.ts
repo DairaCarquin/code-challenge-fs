@@ -24,9 +24,15 @@ export async function GET(request: Request) {
 
         const data = await response.json();
         return NextResponse.json(data);
-    } catch (error: any) {
+    }  catch (error: unknown) {
+        let message = 'Unknown error';
+    
+        if (error instanceof Error) {
+            message = error.message;
+        }
+    
         return NextResponse.json(
-            { error: 'Failed to fetch calls', details: error.message },
+            { error: 'Failed to fetch calls', details: message },
             { status: 500 }
         );
     }

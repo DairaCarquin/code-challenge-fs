@@ -8,8 +8,19 @@ interface Event {
     callId: string;
     type: string;
     timestamp: string;
-    metadata: Record<string, any>;
+    metadata: Record<string, unknown>;
 }
+
+interface SocketPayload {
+    data: {
+      id?: string;
+      callId?: string;
+      call_id?: string;
+      type?: string;
+      timestamp?: string;
+      metadata?: Record<string, unknown>;
+    };
+  }
 
 interface CallEvent {
     callId: string;
@@ -30,9 +41,8 @@ const EventHistory: React.FC = () => {
 
         fetchEvents();
 
-        socket.on('new-event', (payload: { data: any }) => {
+        socket.on('new-event', (payload: SocketPayload) => {
             const { data } = payload;
-
             const newEvent: Event = {
                 id: data.id ?? crypto.randomUUID(),
                 callId: data.callId ?? data.call_id ?? '',
