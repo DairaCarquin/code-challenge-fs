@@ -7,17 +7,22 @@ interface Call {
     startTime: string;
 }
 
-const CallTable: React.FC<{ calls: Call[] }> = ({ calls }) => {
+interface CallTableProps {
+    calls: Call[];
+}
+
+const CallTable: React.FC<CallTableProps> = ({ calls }) => {
+
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(5);
 
     const totalPages = Math.ceil(calls.length / rowsPerPage);
-
     const indexOfLastRow = currentPage * rowsPerPage;
     const indexOfFirstRow = indexOfLastRow - rowsPerPage;
     const currentRows = calls.slice(indexOfFirstRow, indexOfLastRow);
 
     const handlePageChange = (pageNumber: number) => {
+        if (pageNumber < 1 || pageNumber > totalPages) return;
         setCurrentPage(pageNumber);
     };
 
@@ -28,14 +33,7 @@ const CallTable: React.FC<{ calls: Call[] }> = ({ calls }) => {
 
     return (
         <div style={{ padding: '24px' }}>
-            <h2
-                style={{
-                    fontSize: '20px',
-                    fontWeight: 'bold',
-                    color: '#374151',
-                    marginBottom: '16px',
-                }}
-            >
+            <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#374151', marginBottom: '16px' }}>
                 Active Calls
             </h2>
 
@@ -66,7 +64,7 @@ const CallTable: React.FC<{ calls: Call[] }> = ({ calls }) => {
                         </tr>
                     </thead>
                     <tbody>
-                        {Array.isArray(currentRows) && currentRows.length > 0 ? (
+                        {currentRows.length > 0 ? (
                             currentRows.map((call) => (
                                 <tr
                                     key={call.id}
@@ -75,12 +73,8 @@ const CallTable: React.FC<{ calls: Call[] }> = ({ calls }) => {
                                         cursor: 'pointer',
                                         transition: 'background-color 0.2s',
                                     }}
-                                    onMouseEnter={(e) =>
-                                        (e.currentTarget.style.backgroundColor = '#f9fafb')
-                                    }
-                                    onMouseLeave={(e) =>
-                                        (e.currentTarget.style.backgroundColor = '#ffffff')
-                                    }
+                                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f9fafb')}
+                                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#ffffff')}
                                 >
                                     <td
                                         style={{
@@ -129,14 +123,7 @@ const CallTable: React.FC<{ calls: Call[] }> = ({ calls }) => {
                             ))
                         ) : (
                             <tr>
-                                <td
-                                    colSpan={4}
-                                    style={{
-                                        padding: '16px',
-                                        textAlign: 'center',
-                                        color: '#6b7280',
-                                    }}
-                                >
+                                <td colSpan={4} style={{ padding: '16px', textAlign: 'center', color: '#6b7280' }}>
                                     No calls available
                                 </td>
                             </tr>
@@ -145,7 +132,6 @@ const CallTable: React.FC<{ calls: Call[] }> = ({ calls }) => {
                 </table>
             </div>
 
-            {/* Contador de registros */}
             <div
                 style={{
                     marginTop: '16px',
@@ -157,7 +143,8 @@ const CallTable: React.FC<{ calls: Call[] }> = ({ calls }) => {
                 }}
             >
                 <span>
-                    Showing {indexOfFirstRow + 1} to {Math.min(indexOfLastRow, calls.length)} of {calls.length} calls
+                    Showing {calls.length === 0 ? 0 : indexOfFirstRow + 1} to{' '}
+                    {Math.min(indexOfLastRow, calls.length)} of {calls.length} calls
                 </span>
 
                 <select
@@ -170,14 +157,14 @@ const CallTable: React.FC<{ calls: Call[] }> = ({ calls }) => {
                         border: '1px solid #e5e7eb',
                     }}
                 >
-                    <option value={5}>5</option>
-                    <option value={10}>10</option>
-                    <option value={15}>15</option>
-                    <option value={20}>20</option>
+                    {[5, 10, 15, 20].map((n) => (
+                        <option key={n} value={n}>
+                            {n}
+                        </option>
+                    ))}
                 </select>
             </div>
 
-            {/* Paginación */}
             <div
                 style={{
                     marginTop: '16px',
@@ -201,10 +188,10 @@ const CallTable: React.FC<{ calls: Call[] }> = ({ calls }) => {
                 >
                     Previous
                 </button>
-                <span>{`${currentPage} / ${totalPages}`}</span>
+                <span>{`${currentPage} / ${totalPages || 1}`}</span>
                 <button
                     onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages}
+                    disabled={currentPage === totalPages || totalPages === 0}
                     style={{
                         padding: '8px 16px',
                         margin: '0 8px',
@@ -212,7 +199,7 @@ const CallTable: React.FC<{ calls: Call[] }> = ({ calls }) => {
                         color: '#fff',
                         border: 'none',
                         borderRadius: '4px',
-                        cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                        cursor: currentPage === totalPages || totalPages === 0 ? 'not-allowed' : 'pointer',
                     }}
                 >
                     Next

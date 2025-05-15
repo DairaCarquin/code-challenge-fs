@@ -1,6 +1,7 @@
 export enum CallStatus {
     WAITING = 'waiting',
     ACTIVE = 'active',
+    ANSWERED = 'answered',
     ON_HOLD = 'on_hold',
     ENDED = 'ended',
 }

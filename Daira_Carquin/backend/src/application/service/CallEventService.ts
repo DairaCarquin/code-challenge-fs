@@ -86,12 +86,15 @@ export class CallEventService {
             if (!isValid) {
                 throw new Error('Invalid queue_id');
             }
-            await this.callRepo.create({
+            const newCall = {
                 id: callId,
                 queueId: metadata.queue_id,
                 status: CallStatus.WAITING,
                 startTime: new Date(),
-            });
+            };
+            await this.callRepo.create(newCall);
+
+            this.gateway.notify('call-created', newCall);
         }
 
         setTimeout(() => {
@@ -99,17 +102,24 @@ export class CallEventService {
         }, 30_000);
     }
 
+
     private async handleRouted(callId: string, metadata: any) {
         if (metadata.routing_time > 15) {
             this.logger.warn(`Re-routing call ${callId} due to delay`);
         }
         await this.callRepo.updateStatus(callId, CallStatus.ACTIVE);
+        const updatedCall = await this.callRepo.findById(callId);
+        this.gateway.notify('call-updated', updatedCall);
+
     }
 
     private async handleAnswered(callId: string, metadata: any) {
         if (metadata.wait_time > 30) {
             this.logger.warn(`Call ${callId} exceeded wait time. Alerting supervisor`);
         }
+        await this.callRepo.updateStatus(callId, CallStatus.ANSWERED);
+        const updatedCall = await this.callRepo.findById(callId);
+        this.gateway.notify('call-updated', updatedCall);
     }
 
     private async handleHold(callId: string, metadata: any) {
@@ -117,6 +127,9 @@ export class CallEventService {
             this.logger.warn(`Hold time exceeded for call ${callId}`);
         }
         await this.callRepo.updateStatus(callId, CallStatus.ON_HOLD);
+        const updatedCall = await this.callRepo.findById(callId);
+        this.gateway.notify('call-updated', updatedCall);
+
     }
 
     private async handleEnded(callId: string, metadata: any) {
@@ -125,8 +138,9 @@ export class CallEventService {
         if (metadata.duration < 10) {
             this.logger.warn(`Short call duration on ${callId}. Flagging for review`);
         }
-
         await this.callRepo.updateStatus(callId, CallStatus.ENDED, new Date());
+        const updatedCall = await this.callRepo.findById(callId);
+        this.gateway.notify('call-updated', updatedCall);
 
         this.logger.log(`Sending post-call survey for call ${callId}`);
     }

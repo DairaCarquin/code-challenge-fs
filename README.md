@@ -43,7 +43,6 @@ Develop a **microservice** to manage the lifecycle of voice/video calls via real
 
 3. **Database**:
    ```ts
-   // Call Entity
    interface Call {
      id: string;
      status: "waiting" | "active" | "on_hold" | "ended";
@@ -52,7 +51,6 @@ Develop a **microservice** to manage the lifecycle of voice/video calls via real
      end_time?: Date;
    }
 
-   // CallEvent Entity (Audit Log)
    interface CallEvent {
      id: string;
      call_id: string;

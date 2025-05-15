@@ -25,6 +25,8 @@ const Home: React.FC = () => {
     };
 
     useEffect(() => {
+        console.log('Conectando al socket...');
+
         const fetchInitialCalls = async () => {
             const res = await fetch('/api/calls');
             const data = await res.json();
@@ -32,15 +34,31 @@ const Home: React.FC = () => {
         };
 
         fetchInitialCalls();
+        socket.on('new-event', ({ type, data }) => {
+            console.log('📡 new-event received:', type, data);
+            if (type === 'call-created') {
+                setCalls(prev => [data, ...prev]);
+            }
+        });
 
-        socket.on('call_updated', (updatedCall: Call) => {
-            setCalls((prev) =>
-                prev.map((call) => (call.id === updatedCall.id ? updatedCall : call))
-            );
+        socket.on('call-updated', (updatedCall: Call) => {
+            console.log('call-updated received:', updatedCall);
+            fetchFilteredCalls(); 
+            setCalls(prev => {
+                const index = prev.findIndex(call => call.id === updatedCall.id);
+                if (index !== -1) {
+                    const updated = [...prev];
+                    updated[index] = updatedCall;
+                    return updated;
+                } else {
+                    return [updatedCall, ...prev];
+                }
+            });
         });
 
         return () => {
-            socket.off('call_updated');
+            socket.off('call-created');
+            socket.off('call-updated');
         };
     }, []);
 
