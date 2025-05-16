@@ -7,6 +7,7 @@ import { CallEventsController } from './infrastructure/controllers/call-events.c
 import { CallEventService } from './application/service/CallEventService';
 import { CallsService } from './application/service/CallsService';
 import { InfrastructureModule } from './infrastructure/infraestructure.module';
+import { TwilioWebhookController } from './infrastructure/controllers/twilio.webhook.controller';
 
 @Module({
   imports: [
@@ -14,7 +15,7 @@ import { InfrastructureModule } from './infrastructure/infraestructure.module';
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRoot(typeOrmConfig),
   ],
-  controllers: [CallsController, CallEventsController],
+  controllers: [CallsController, CallEventsController, TwilioWebhookController],
   providers: [
     CallEventService,
     CallsService,
