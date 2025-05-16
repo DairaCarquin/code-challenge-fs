@@ -23,23 +23,24 @@ export class TwilioWebhookController {
     }
 
     private mapTwillioEvent(body: any): CallEventDto {
-        const { CallSid, AccountSid, From, To, CallStatus, ApiVersion, Direction, ForwardedFrom, CallerName, ParentCallSid, Timestamp } = body;
+        const { callSid, accountSid, from, to, callStatus, apiVersion, direction, forwardedFrom, callerName, parentCallSid, timestamp, queue_id} = body;
 
-        const event = this.mapTwillioEventType(CallStatus);
+        const event = this.mapTwillioEventType(callStatus);
 
         return {
-            call_id: CallSid,
+            call_id: callSid,
             type: event,
-            timestamp: Timestamp ? new Date(Timestamp) : new Date(),
+            timestamp: timestamp ? new Date(timestamp) : new Date(),
             metadata: {
-                from: From,
-                to: To,
-                account_sid: AccountSid,
-                api_version: ApiVersion,
-                direction: Direction,
-                forwarded_from: ForwardedFrom,
-                caller_name: CallerName,
-                parent_call_sid: ParentCallSid,
+                from: from,
+                to: to,
+                account_sid: accountSid,
+                api_version: apiVersion,
+                direction: direction,
+                forwarded_from: forwardedFrom,
+                caller_name: callerName,
+                parent_call_sid: parentCallSid,
+                queue_id: queue_id,
             }
         }
     }
